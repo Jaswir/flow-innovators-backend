@@ -8,7 +8,7 @@ def index(request):
     html = f'''
     <html>
         <body>
-            <h1>Hello from Vercel <3 Langflow!</h1>
+            <h1>Flow Innovators Backend Greets you!</h1>
             <p>The current time is { now }.</p>
         </body>
     </html>
