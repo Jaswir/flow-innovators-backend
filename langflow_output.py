@@ -25,10 +25,10 @@ def getResponseFromAgentCrew(question):
     output_text = response[0].outputs[0].results['message'].text
     return output_text
 
-# question = "Background Story: : the student failed the exam, 3 times. Student Experieence: I can understand the topics generally but I can't understand the mathematical formulations, my biggest challenges for the course is to understand mathematical formulations"
-# # question = "What is the document about?"
+# question = "I am a beginner in the Health startup scene, I don't know anything about Health Domain. Particularly interested in cutting waiting time"
+# # # question = "What is the document about?"
 # result = getResponseFromAgentCrew(question)
 
-# # # print(type(result))
+# # # # print(type(result))
 # print(result)
 

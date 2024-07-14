@@ -1,10 +1,10 @@
 {
-    "id": "92a8ad66-5d44-49fe-b9e4-e9a6e3e367da",
+    "id": "5d47ea9b-eba9-4b7b-8fae-bd308ce79813",
     "data": {
         "nodes": [
             {
                 "data": {
-                    "id": "ChatInput-jmUEb",
+                    "id": "ChatInput-bMHIs",
                     "node": {
                         "template": {
                             "_type": "Component",
@@ -56,7 +56,7 @@
                                 "list": false,
                                 "show": true,
                                 "multiline": true,
-                                "value": "from langflow.base.data.utils import IMG_FILE_TYPES, TEXT_FILE_TYPES\nfrom langflow.base.io.chat import ChatComponent\nfrom langflow.io import DropdownInput, FileInput, MessageTextInput, MultilineInput, Output\nfrom langflow.schema.message import Message\n\n\nclass ChatInput(ChatComponent):\n    display_name = \"Chat Input\"\n    description = \"Get chat inputs from the Playground.\"\n    icon = \"ChatInput\"\n    name = \"ChatInput\"\n\n    inputs = [\n        MultilineInput(\n            name=\"input_value\",\n            display_name=\"Text\",\n            value=\"\",\n            info=\"Message to be passed as input.\",\n        ),\n        DropdownInput(\n            name=\"sender\",\n            display_name=\"Sender Type\",\n            options=[\"Machine\", \"User\"],\n            value=\"User\",\n            info=\"Type of sender.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"sender_name\",\n            display_name=\"Sender Name\",\n            info=\"Name of the sender.\",\n            value=\"User\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"session_id\", display_name=\"Session ID\", info=\"Session ID for the message.\", advanced=True\n        ),\n        FileInput(\n            name=\"files\",\n            display_name=\"Files\",\n            file_types=TEXT_FILE_TYPES + IMG_FILE_TYPES,\n            info=\"Files to be sent with the message.\",\n            advanced=True,\n            is_list=True,\n        ),\n    ]\n    outputs = [\n        Output(display_name=\"Message\", name=\"message\", method=\"message_response\"),\n    ]\n\n    def message_response(self) -> Message:\n        message = Message(\n            text=self.input_value,\n            sender=self.sender,\n            sender_name=self.sender_name,\n            session_id=self.session_id,\n            files=self.files,\n        )\n        if self.session_id and isinstance(message, Message) and isinstance(message.text, str):\n            self.store_message(message)\n            self.message.value = message\n\n        self.status = message\n        return message\n",
+                                "value": "from langflow.base.data.utils import IMG_FILE_TYPES, TEXT_FILE_TYPES\nfrom langflow.base.io.chat import ChatComponent\nfrom langflow.inputs import BoolInput\nfrom langflow.io import DropdownInput, FileInput, MessageTextInput, MultilineInput, Output\nfrom langflow.memory import store_message\nfrom langflow.schema.message import Message\n\n\nclass ChatInput(ChatComponent):\n    display_name = \"Chat Input\"\n    description = \"Get chat inputs from the Playground.\"\n    icon = \"ChatInput\"\n    name = \"ChatInput\"\n\n    inputs = [\n        MultilineInput(\n            name=\"input_value\",\n            display_name=\"Text\",\n            value=\"\",\n            info=\"Message to be passed as input.\",\n        ),\n        BoolInput(\n            name=\"store_message\",\n            display_name=\"Store Messages\",\n            info=\"Store the message in the history.\",\n            value=True,\n            advanced=True,\n        ),\n        DropdownInput(\n            name=\"sender\",\n            display_name=\"Sender Type\",\n            options=[\"Machine\", \"User\"],\n            value=\"User\",\n            info=\"Type of sender.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"sender_name\",\n            display_name=\"Sender Name\",\n            info=\"Name of the sender.\",\n            value=\"User\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"session_id\", display_name=\"Session ID\", info=\"Session ID for the message.\", advanced=True\n        ),\n        FileInput(\n            name=\"files\",\n            display_name=\"Files\",\n            file_types=TEXT_FILE_TYPES + IMG_FILE_TYPES,\n            info=\"Files to be sent with the message.\",\n            advanced=True,\n            is_list=True,\n        ),\n    ]\n    outputs = [\n        Output(display_name=\"Message\", name=\"message\", method=\"message_response\"),\n    ]\n\n    def message_response(self) -> Message:\n        message = Message(\n            text=self.input_value,\n            sender=self.sender,\n            sender_name=self.sender_name,\n            session_id=self.session_id,\n            files=self.files,\n        )\n\n        if self.session_id and isinstance(message, Message) and isinstance(message.text, str):\n            store_message(\n                message,\n                flow_id=self.graph.flow_id,\n            )\n            self.message.value = message\n\n        self.status = message\n        return message\n",
                                 "fileTypes": [],
                                 "file_path": "",
                                 "password": false,
@@ -76,7 +76,7 @@
                                 "required": false,
                                 "placeholder": "",
                                 "show": true,
-                                "value": "Backstory: the student failed the exam, 3 times. Student Experieence: I can understand the topics generally but I can't understand the mathematical formulations, my biggest challenges for the course is to understand mathematical formulations",
+                                "value": "I am a beginner in the Health startup scene, I don't know anything about Health Domain. Particularly interested in cutting waiting time",
                                 "name": "input_value",
                                 "display_name": "Text",
                                 "advanced": false,
@@ -145,6 +145,21 @@
                                 "info": "Session ID for the message.",
                                 "title_case": false,
                                 "type": "str"
+                            },
+                            "store_message": {
+                                "trace_as_metadata": true,
+                                "list": false,
+                                "required": false,
+                                "placeholder": "",
+                                "show": true,
+                                "value": true,
+                                "name": "store_message",
+                                "display_name": "Store Messages",
+                                "advanced": true,
+                                "dynamic": false,
+                                "info": "Store the message in the history.",
+                                "title_case": false,
+                                "type": "bool"
                             }
                         },
                         "description": "Get chat inputs from the Playground.",
@@ -169,12 +184,12 @@
                                 "display_name": "Message",
                                 "method": "message_response",
                                 "value": "__UNDEFINED__",
-                                "cache": true,
-                                "hidden": false
+                                "cache": true
                             }
                         ],
                         "field_order": [
                             "input_value",
+                            "store_message",
                             "sender",
                             "sender_name",
                             "session_id",
@@ -189,7 +204,7 @@
                 },
                 "dragging": false,
                 "height": 308,
-                "id": "ChatInput-jmUEb",
+                "id": "ChatInput-bMHIs",
                 "position": {
                     "x": -676.7035420872584,
                     "y": 618.8725191230834
@@ -206,7 +221,7 @@
                 "data": {
                     "description": "Create a prompt template with dynamic variables.",
                     "display_name": "Prompt",
-                    "id": "Prompt-zYCPB",
+                    "id": "Prompt-0d862",
                     "node": {
                         "template": {
                             "_type": "Component",
@@ -234,7 +249,7 @@
                                 "required": false,
                                 "placeholder": "",
                                 "show": true,
-                                "value": "You are an agent that identifies the main topics a student struggles with based on their background story. \nAnother Agent will receive your topics and will go through the slides of the course and make notes about these topics. \n\nGiven this {background_story} identify the main topics that should be focused on when writing notes\n\n",
+                                "value": "You are an agent that identifies the main topics a student struggles with based on their background story and give a brief summary stating the main topics about this max 5 lines. Start with \"these are the topics that should be focused on:\" \nAnother Agent will receive your topics and will go through the slides of the course and make notes about these topics. \n\nGiven this {background_story} identify the main topics that should be focused on when writing notes\n\n",
                                 "name": "template",
                                 "display_name": "Template",
                                 "advanced": false,
@@ -315,7 +330,7 @@
                 },
                 "dragging": false,
                 "height": 422,
-                "id": "Prompt-zYCPB",
+                "id": "Prompt-0d862",
                 "position": {
                     "x": 63.18825565916927,
                     "y": 1098.555420787878
@@ -330,7 +345,7 @@
             },
             {
                 "data": {
-                    "id": "OpenAIModel-Wg3K9",
+                    "id": "OpenAIModel-1gUMA",
                     "node": {
                         "template": {
                             "_type": "Component",
@@ -609,7 +624,7 @@
                 },
                 "dragging": false,
                 "height": 621,
-                "id": "OpenAIModel-Wg3K9",
+                "id": "OpenAIModel-1gUMA",
                 "position": {
                     "x": 677.7195258934647,
                     "y": 1071.8825790991193
@@ -623,14 +638,14 @@
                 "width": 384
             },
             {
-                "id": "OpenAIModel-nZS5P",
+                "id": "OpenAIModel-n9JCS",
                 "type": "genericNode",
                 "position": {
                     "x": 743.4392888318246,
                     "y": 224.62685486908651
                 },
                 "data": {
-                    "id": "OpenAIModel-nZS5P",
+                    "id": "OpenAIModel-n9JCS",
                     "node": {
                         "template": {
                             "_type": "Component",
@@ -917,14 +932,14 @@
                 "dragging": false
             },
             {
-                "id": "ChatOutput-jvAgG",
+                "id": "ChatOutput-X9s7P",
                 "type": "genericNode",
                 "position": {
                     "x": 1901.615492194406,
                     "y": 805.0327357538961
                 },
                 "data": {
-                    "id": "ChatOutput-jvAgG",
+                    "id": "ChatOutput-X9s7P",
                     "node": {
                         "template": {
                             "_type": "Component",
@@ -935,7 +950,7 @@
                                 "list": false,
                                 "show": true,
                                 "multiline": true,
-                                "value": "from langflow.base.io.chat import ChatComponent\nfrom langflow.io import DropdownInput, MessageTextInput, Output\nfrom langflow.schema.message import Message\n\n\nclass ChatOutput(ChatComponent):\n    display_name = \"Chat Output\"\n    description = \"Display a chat message in the Playground.\"\n    icon = \"ChatOutput\"\n    name = \"ChatOutput\"\n\n    inputs = [\n        MessageTextInput(\n            name=\"input_value\",\n            display_name=\"Text\",\n            info=\"Message to be passed as output.\",\n        ),\n        DropdownInput(\n            name=\"sender\",\n            display_name=\"Sender Type\",\n            options=[\"Machine\", \"User\"],\n            value=\"Machine\",\n            advanced=True,\n            info=\"Type of sender.\",\n        ),\n        MessageTextInput(\n            name=\"sender_name\", display_name=\"Sender Name\", info=\"Name of the sender.\", value=\"AI\", advanced=True\n        ),\n        MessageTextInput(\n            name=\"session_id\", display_name=\"Session ID\", info=\"Session ID for the message.\", advanced=True\n        ),\n        MessageTextInput(\n            name=\"data_template\",\n            display_name=\"Data Template\",\n            value=\"{text}\",\n            advanced=True,\n            info=\"Template to convert Data to Text. If left empty, it will be dynamically set to the Data's text key.\",\n        ),\n    ]\n    outputs = [\n        Output(display_name=\"Message\", name=\"message\", method=\"message_response\"),\n    ]\n\n    def message_response(self) -> Message:\n        message = Message(\n            text=self.input_value,\n            sender=self.sender,\n            sender_name=self.sender_name,\n            session_id=self.session_id,\n        )\n        if self.session_id and isinstance(message, Message) and isinstance(message.text, str):\n            self.store_message(message)\n            self.message.value = message\n\n        self.status = message\n        return message\n",
+                                "value": "from langflow.base.io.chat import ChatComponent\nfrom langflow.inputs import BoolInput\nfrom langflow.io import DropdownInput, MessageTextInput, Output\nfrom langflow.memory import store_message\nfrom langflow.schema.message import Message\n\n\nclass ChatOutput(ChatComponent):\n    display_name = \"Chat Output\"\n    description = \"Display a chat message in the Playground.\"\n    icon = \"ChatOutput\"\n    name = \"ChatOutput\"\n\n    inputs = [\n        MessageTextInput(\n            name=\"input_value\",\n            display_name=\"Text\",\n            info=\"Message to be passed as output.\",\n        ),\n        BoolInput(\n            name=\"store_message\",\n            display_name=\"Store Messages\",\n            info=\"Store the message in the history.\",\n            value=True,\n            advanced=True,\n        ),\n        DropdownInput(\n            name=\"sender\",\n            display_name=\"Sender Type\",\n            options=[\"Machine\", \"User\"],\n            value=\"Machine\",\n            advanced=True,\n            info=\"Type of sender.\",\n        ),\n        MessageTextInput(\n            name=\"sender_name\", display_name=\"Sender Name\", info=\"Name of the sender.\", value=\"AI\", advanced=True\n        ),\n        MessageTextInput(\n            name=\"session_id\", display_name=\"Session ID\", info=\"Session ID for the message.\", advanced=True\n        ),\n        MessageTextInput(\n            name=\"data_template\",\n            display_name=\"Data Template\",\n            value=\"{text}\",\n            advanced=True,\n            info=\"Template to convert Data to Text. If left empty, it will be dynamically set to the Data's text key.\",\n        ),\n    ]\n    outputs = [\n        Output(display_name=\"Message\", name=\"message\", method=\"message_response\"),\n    ]\n\n    def message_response(self) -> Message:\n        message = Message(\n            text=self.input_value,\n            sender=self.sender,\n            sender_name=self.sender_name,\n            session_id=self.session_id,\n        )\n        if self.session_id and isinstance(message, Message) and isinstance(message.text, str):\n            store_message(\n                message,\n                flow_id=self.graph.flow_id,\n            )\n            self.message.value = message\n\n        self.status = message\n        return message\n",
                                 "fileTypes": [],
                                 "file_path": "",
                                 "password": false,
@@ -1043,6 +1058,21 @@
                                 "info": "Session ID for the message.",
                                 "title_case": false,
                                 "type": "str"
+                            },
+                            "store_message": {
+                                "trace_as_metadata": true,
+                                "list": false,
+                                "required": false,
+                                "placeholder": "",
+                                "show": true,
+                                "value": true,
+                                "name": "store_message",
+                                "display_name": "Store Messages",
+                                "advanced": true,
+                                "dynamic": false,
+                                "info": "Store the message in the history.",
+                                "title_case": false,
+                                "type": "bool"
                             }
                         },
                         "description": "Display a chat message in the Playground.",
@@ -1072,6 +1102,7 @@
                         ],
                         "field_order": [
                             "input_value",
+                            "store_message",
                             "sender",
                             "sender_name",
                             "session_id",
@@ -1094,7 +1125,7 @@
                 "dragging": false
             },
             {
-                "id": "Prompt-yZLfi",
+                "id": "Prompt-8dnGj",
                 "type": "genericNode",
                 "position": {
                     "x": 183.47486728009574,
@@ -1103,7 +1134,7 @@
                 "data": {
                     "description": "Create a prompt template with dynamic variables.",
                     "display_name": "Prompt",
-                    "id": "Prompt-yZLfi",
+                    "id": "Prompt-8dnGj",
                     "node": {
                         "template": {
                             "_type": "Component",
@@ -1220,11 +1251,11 @@
                 "dragging": false
             },
             {
-                "id": "CombineText-1c8RE",
+                "id": "CombineText-rqT0D",
                 "type": "genericNode",
                 "position": {
-                    "x": 1378.077373989362,
-                    "y": 735.7264993522706
+                    "x": 1421.6049021541683,
+                    "y": 725.279892592717
                 },
                 "data": {
                     "type": "CombineText",
@@ -1344,15 +1375,15 @@
                         "beta": false,
                         "edited": false
                     },
-                    "id": "CombineText-1c8RE"
+                    "id": "CombineText-rqT0D"
                 },
                 "selected": false,
                 "width": 384,
                 "height": 523,
                 "dragging": false,
                 "positionAbsolute": {
-                    "x": 1378.077373989362,
-                    "y": 735.7264993522706
+                    "x": 1421.6049021541683,
+                    "y": 725.279892592717
                 }
             }
         ],
@@ -1361,7 +1392,7 @@
                 "data": {
                     "sourceHandle": {
                         "dataType": "Prompt",
-                        "id": "Prompt-zYCPB",
+                        "id": "Prompt-0d862",
                         "name": "prompt",
                         "output_types": [
                             "Message"
@@ -1369,29 +1400,30 @@
                     },
                     "targetHandle": {
                         "fieldName": "input_value",
-                        "id": "OpenAIModel-Wg3K9",
+                        "id": "OpenAIModel-1gUMA",
                         "inputTypes": [
                             "Message"
                         ],
                         "type": "str"
                     }
                 },
-                "id": "reactflow__edge-Prompt-zYCPB{œdataTypeœ:œPromptœ,œidœ:œPrompt-zYCPBœ,œnameœ:œpromptœ,œoutput_typesœ:[œMessageœ]}-OpenAIModel-Wg3K9{œfieldNameœ:œinput_valueœ,œidœ:œOpenAIModel-Wg3K9œ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
-                "source": "Prompt-zYCPB",
-                "sourceHandle": "{œdataTypeœ:œPromptœ,œidœ:œPrompt-zYCPBœ,œnameœ:œpromptœ,œoutput_typesœ:[œMessageœ]}",
-                "target": "OpenAIModel-Wg3K9",
-                "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œOpenAIModel-Wg3K9œ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
-                "className": ""
+                "id": "reactflow__edge-Prompt-0d862{œdataTypeœ:œPromptœ,œidœ:œPrompt-0d862œ,œnameœ:œpromptœ,œoutput_typesœ:[œMessageœ]}-OpenAIModel-1gUMA{œfieldNameœ:œinput_valueœ,œidœ:œOpenAIModel-1gUMAœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+                "source": "Prompt-0d862",
+                "sourceHandle": "{œdataTypeœ:œPromptœ,œidœ:œPrompt-0d862œ,œnameœ:œpromptœ,œoutput_typesœ:[œMessageœ]}",
+                "target": "OpenAIModel-1gUMA",
+                "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œOpenAIModel-1gUMAœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+                "className": "",
+                "selected": false
             },
             {
-                "source": "Prompt-yZLfi",
-                "sourceHandle": "{œdataTypeœ:œPromptœ,œidœ:œPrompt-yZLfiœ,œnameœ:œpromptœ,œoutput_typesœ:[œMessageœ]}",
-                "target": "OpenAIModel-nZS5P",
-                "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œOpenAIModel-nZS5Pœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+                "source": "Prompt-8dnGj",
+                "sourceHandle": "{œdataTypeœ:œPromptœ,œidœ:œPrompt-8dnGjœ,œnameœ:œpromptœ,œoutput_typesœ:[œMessageœ]}",
+                "target": "OpenAIModel-n9JCS",
+                "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œOpenAIModel-n9JCSœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
                 "data": {
                     "targetHandle": {
                         "fieldName": "input_value",
-                        "id": "OpenAIModel-nZS5P",
+                        "id": "OpenAIModel-n9JCS",
                         "inputTypes": [
                             "Message"
                         ],
@@ -1399,24 +1431,26 @@
                     },
                     "sourceHandle": {
                         "dataType": "Prompt",
-                        "id": "Prompt-yZLfi",
+                        "id": "Prompt-8dnGj",
                         "name": "prompt",
                         "output_types": [
                             "Message"
                         ]
                     }
                 },
-                "id": "reactflow__edge-Prompt-yZLfi{œdataTypeœ:œPromptœ,œidœ:œPrompt-yZLfiœ,œnameœ:œpromptœ,œoutput_typesœ:[œMessageœ]}-OpenAIModel-nZS5P{œfieldNameœ:œinput_valueœ,œidœ:œOpenAIModel-nZS5Pœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}"
+                "id": "reactflow__edge-Prompt-8dnGj{œdataTypeœ:œPromptœ,œidœ:œPrompt-8dnGjœ,œnameœ:œpromptœ,œoutput_typesœ:[œMessageœ]}-OpenAIModel-n9JCS{œfieldNameœ:œinput_valueœ,œidœ:œOpenAIModel-n9JCSœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+                "className": "",
+                "selected": false
             },
             {
-                "source": "ChatInput-jmUEb",
-                "sourceHandle": "{œdataTypeœ:œChatInputœ,œidœ:œChatInput-jmUEbœ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}",
-                "target": "Prompt-zYCPB",
-                "targetHandle": "{œfieldNameœ:œbackground_storyœ,œidœ:œPrompt-zYCPBœ,œinputTypesœ:[œMessageœ,œTextœ],œtypeœ:œstrœ}",
+                "source": "ChatInput-bMHIs",
+                "sourceHandle": "{œdataTypeœ:œChatInputœ,œidœ:œChatInput-bMHIsœ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}",
+                "target": "Prompt-0d862",
+                "targetHandle": "{œfieldNameœ:œbackground_storyœ,œidœ:œPrompt-0d862œ,œinputTypesœ:[œMessageœ,œTextœ],œtypeœ:œstrœ}",
                 "data": {
                     "targetHandle": {
                         "fieldName": "background_story",
-                        "id": "Prompt-zYCPB",
+                        "id": "Prompt-0d862",
                         "inputTypes": [
                             "Message",
                             "Text"
@@ -1425,24 +1459,26 @@
                     },
                     "sourceHandle": {
                         "dataType": "ChatInput",
-                        "id": "ChatInput-jmUEb",
+                        "id": "ChatInput-bMHIs",
                         "name": "message",
                         "output_types": [
                             "Message"
                         ]
                     }
                 },
-                "id": "reactflow__edge-ChatInput-jmUEb{œdataTypeœ:œChatInputœ,œidœ:œChatInput-jmUEbœ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}-Prompt-zYCPB{œfieldNameœ:œbackground_storyœ,œidœ:œPrompt-zYCPBœ,œinputTypesœ:[œMessageœ,œTextœ],œtypeœ:œstrœ}"
+                "id": "reactflow__edge-ChatInput-bMHIs{œdataTypeœ:œChatInputœ,œidœ:œChatInput-bMHIsœ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}-Prompt-0d862{œfieldNameœ:œbackground_storyœ,œidœ:œPrompt-0d862œ,œinputTypesœ:[œMessageœ,œTextœ],œtypeœ:œstrœ}",
+                "className": "",
+                "selected": false
             },
             {
-                "source": "CombineText-1c8RE",
-                "sourceHandle": "{œdataTypeœ:œCombineTextœ,œidœ:œCombineText-1c8REœ,œnameœ:œcombined_textœ,œoutput_typesœ:[œMessageœ]}",
-                "target": "ChatOutput-jvAgG",
-                "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œChatOutput-jvAgGœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+                "source": "CombineText-rqT0D",
+                "sourceHandle": "{œdataTypeœ:œCombineTextœ,œidœ:œCombineText-rqT0Dœ,œnameœ:œcombined_textœ,œoutput_typesœ:[œMessageœ]}",
+                "target": "ChatOutput-X9s7P",
+                "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œChatOutput-X9s7Pœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
                 "data": {
                     "targetHandle": {
                         "fieldName": "input_value",
-                        "id": "ChatOutput-jvAgG",
+                        "id": "ChatOutput-X9s7P",
                         "inputTypes": [
                             "Message"
                         ],
@@ -1450,24 +1486,26 @@
                     },
                     "sourceHandle": {
                         "dataType": "CombineText",
-                        "id": "CombineText-1c8RE",
+                        "id": "CombineText-rqT0D",
                         "name": "combined_text",
                         "output_types": [
                             "Message"
                         ]
                     }
                 },
-                "id": "reactflow__edge-CombineText-1c8RE{œdataTypeœ:œCombineTextœ,œidœ:œCombineText-1c8REœ,œnameœ:œcombined_textœ,œoutput_typesœ:[œMessageœ]}-ChatOutput-jvAgG{œfieldNameœ:œinput_valueœ,œidœ:œChatOutput-jvAgGœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}"
+                "id": "reactflow__edge-CombineText-rqT0D{œdataTypeœ:œCombineTextœ,œidœ:œCombineText-rqT0Dœ,œnameœ:œcombined_textœ,œoutput_typesœ:[œMessageœ]}-ChatOutput-X9s7P{œfieldNameœ:œinput_valueœ,œidœ:œChatOutput-X9s7Pœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+                "className": "",
+                "selected": false
             },
             {
-                "source": "ChatInput-jmUEb",
-                "sourceHandle": "{œdataTypeœ:œChatInputœ,œidœ:œChatInput-jmUEbœ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}",
-                "target": "Prompt-yZLfi",
-                "targetHandle": "{œfieldNameœ:œbackground_storyœ,œidœ:œPrompt-yZLfiœ,œinputTypesœ:[œMessageœ,œTextœ],œtypeœ:œstrœ}",
+                "source": "ChatInput-bMHIs",
+                "sourceHandle": "{œdataTypeœ:œChatInputœ,œidœ:œChatInput-bMHIsœ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}",
+                "target": "Prompt-8dnGj",
+                "targetHandle": "{œfieldNameœ:œbackground_storyœ,œidœ:œPrompt-8dnGjœ,œinputTypesœ:[œMessageœ,œTextœ],œtypeœ:œstrœ}",
                 "data": {
                     "targetHandle": {
                         "fieldName": "background_story",
-                        "id": "Prompt-yZLfi",
+                        "id": "Prompt-8dnGj",
                         "inputTypes": [
                             "Message",
                             "Text"
@@ -1476,24 +1514,26 @@
                     },
                     "sourceHandle": {
                         "dataType": "ChatInput",
-                        "id": "ChatInput-jmUEb",
+                        "id": "ChatInput-bMHIs",
                         "name": "message",
                         "output_types": [
                             "Message"
                         ]
                     }
                 },
-                "id": "reactflow__edge-ChatInput-jmUEb{œdataTypeœ:œChatInputœ,œidœ:œChatInput-jmUEbœ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}-Prompt-yZLfi{œfieldNameœ:œbackground_storyœ,œidœ:œPrompt-yZLfiœ,œinputTypesœ:[œMessageœ,œTextœ],œtypeœ:œstrœ}"
+                "id": "reactflow__edge-ChatInput-bMHIs{œdataTypeœ:œChatInputœ,œidœ:œChatInput-bMHIsœ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}-Prompt-8dnGj{œfieldNameœ:œbackground_storyœ,œidœ:œPrompt-8dnGjœ,œinputTypesœ:[œMessageœ,œTextœ],œtypeœ:œstrœ}",
+                "className": "",
+                "selected": false
             },
             {
-                "source": "OpenAIModel-nZS5P",
-                "sourceHandle": "{œdataTypeœ:œOpenAIModelœ,œidœ:œOpenAIModel-nZS5Pœ,œnameœ:œtext_outputœ,œoutput_typesœ:[œMessageœ]}",
-                "target": "CombineText-1c8RE",
-                "targetHandle": "{œfieldNameœ:œtext2œ,œidœ:œCombineText-1c8REœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+                "source": "OpenAIModel-1gUMA",
+                "sourceHandle": "{œdataTypeœ:œOpenAIModelœ,œidœ:œOpenAIModel-1gUMAœ,œnameœ:œtext_outputœ,œoutput_typesœ:[œMessageœ]}",
+                "target": "CombineText-rqT0D",
+                "targetHandle": "{œfieldNameœ:œtext2œ,œidœ:œCombineText-rqT0Dœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
                 "data": {
                     "targetHandle": {
                         "fieldName": "text2",
-                        "id": "CombineText-1c8RE",
+                        "id": "CombineText-rqT0D",
                         "inputTypes": [
                             "Message"
                         ],
@@ -1501,24 +1541,26 @@
                     },
                     "sourceHandle": {
                         "dataType": "OpenAIModel",
-                        "id": "OpenAIModel-nZS5P",
+                        "id": "OpenAIModel-1gUMA",
                         "name": "text_output",
                         "output_types": [
                             "Message"
                         ]
                     }
                 },
-                "id": "reactflow__edge-OpenAIModel-nZS5P{œdataTypeœ:œOpenAIModelœ,œidœ:œOpenAIModel-nZS5Pœ,œnameœ:œtext_outputœ,œoutput_typesœ:[œMessageœ]}-CombineText-1c8RE{œfieldNameœ:œtext2œ,œidœ:œCombineText-1c8REœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}"
+                "className": "",
+                "selected": false,
+                "id": "reactflow__edge-OpenAIModel-1gUMA{œdataTypeœ:œOpenAIModelœ,œidœ:œOpenAIModel-1gUMAœ,œnameœ:œtext_outputœ,œoutput_typesœ:[œMessageœ]}-CombineText-rqT0D{œfieldNameœ:œtext2œ,œidœ:œCombineText-rqT0Dœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}"
             },
             {
-                "source": "OpenAIModel-Wg3K9",
-                "sourceHandle": "{œdataTypeœ:œOpenAIModelœ,œidœ:œOpenAIModel-Wg3K9œ,œnameœ:œtext_outputœ,œoutput_typesœ:[œMessageœ]}",
-                "target": "CombineText-1c8RE",
-                "targetHandle": "{œfieldNameœ:œtext1œ,œidœ:œCombineText-1c8REœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+                "source": "OpenAIModel-n9JCS",
+                "sourceHandle": "{œdataTypeœ:œOpenAIModelœ,œidœ:œOpenAIModel-n9JCSœ,œnameœ:œtext_outputœ,œoutput_typesœ:[œMessageœ]}",
+                "target": "CombineText-rqT0D",
+                "targetHandle": "{œfieldNameœ:œtext1œ,œidœ:œCombineText-rqT0Dœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
                 "data": {
                     "targetHandle": {
                         "fieldName": "text1",
-                        "id": "CombineText-1c8RE",
+                        "id": "CombineText-rqT0D",
                         "inputTypes": [
                             "Message"
                         ],
@@ -1526,25 +1568,25 @@
                     },
                     "sourceHandle": {
                         "dataType": "OpenAIModel",
-                        "id": "OpenAIModel-Wg3K9",
+                        "id": "OpenAIModel-n9JCS",
                         "name": "text_output",
                         "output_types": [
                             "Message"
                         ]
                     }
                 },
-                "id": "reactflow__edge-OpenAIModel-Wg3K9{œdataTypeœ:œOpenAIModelœ,œidœ:œOpenAIModel-Wg3K9œ,œnameœ:œtext_outputœ,œoutput_typesœ:[œMessageœ]}-CombineText-1c8RE{œfieldNameœ:œtext1œ,œidœ:œCombineText-1c8REœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}"
+                "id": "reactflow__edge-OpenAIModel-n9JCS{œdataTypeœ:œOpenAIModelœ,œidœ:œOpenAIModel-n9JCSœ,œnameœ:œtext_outputœ,œoutput_typesœ:[œMessageœ]}-CombineText-rqT0D{œfieldNameœ:œtext1œ,œidœ:œCombineText-rqT0Dœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}"
             }
         ],
         "viewport": {
-            "x": 0,
-            "y": 0,
-            "zoom": 1
+            "x": 441.53960007804517,
+            "y": -131.79670821199784,
+            "zoom": 0.5743491774985177
         }
     },
     "description": "This flow will get you experimenting with the basics of the UI, the Chat and the Prompt component. \n\nTry changing the Template in it to see how the model behaves. \nYou can change it to this and a Text Input into the `type_of_person` variable : \"Answer the user as if you were a pirate.\n\nUser: {user_input}\n\nAnswer: \" ",
     "name": "Priority and Depth Agents",
-    "last_tested_version": "1.0.7",
+    "last_tested_version": "1.0.9",
     "endpoint_name": null,
     "is_component": false
 }
