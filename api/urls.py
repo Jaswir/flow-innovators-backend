@@ -55,5 +55,8 @@ urlpatterns = [
     ),
     path("admin/", admin.site.urls),
     path("test/", views.test),
+    path("query/", views.getResponseFromLangFlow),
+    path("addfile_tutorbrain/", views.addFileTutorBrain),
+    path("get_agent_crew_advice/", views.getAgentCrewAdvice),
     path("", include("example.urls")),
 ]
